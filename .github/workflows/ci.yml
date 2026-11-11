@@ -1,0 +1,60 @@
+# Nombre del proceso automatico
+name: Validar sistema academico
+
+# Eventos que activan el proceso
+on:
+  # Se activa al subir cambios
+  push:
+    # Solo para la rama main
+    branches: [main]
+  # Permite ejecutarlo manualmente
+  workflow_dispatch:
+
+# Permisos del proceso
+permissions:
+  # Permite leer los archivos del repositorio
+  contents: read
+
+# Trabajos que se ejecutaran
+jobs:
+  # Identificador del trabajo
+  validar:
+    # Utiliza una maquina Linux de GitHub
+    runs-on: ubuntu-latest
+
+    # Pasos que se ejecutaran en orden
+    steps:
+      # Nombre del primer paso
+      - name: Descargar codigo
+        # Descarga el codigo del repositorio
+        uses: actions/checkout@v6
+
+      # Nombre del paso de preparacion
+      - name: Preparar NET 8
+        # Prepara las herramientas de NET
+        uses: actions/setup-dotnet@v4
+        # Opciones de configuracion
+        with:
+          # Selecciona una version de NET 8
+          dotnet-version: '8.0.x'
+
+      # Nombre del paso de restauracion
+      - name: Restaurar dependencias
+        # Restaura las dependencias del proyecto
+        run: dotnet restore SistemaAcademico/SistemaAcademico.csproj
+
+      # Nombre del paso de compilacion
+      - name: Compilar
+        # Compila sin repetir la restauracion
+        run: dotnet build SistemaAcademico/SistemaAcademico.csproj --no-restore
+
+      # Nombre del paso de comprobacion
+      - name: Verificar resultado
+        # Permite escribir varios comandos
+        run: |
+          # Ejecuta el programa y guarda su salida
+          dotnet run --project SistemaAcademico/SistemaAcademico.csproj --no-build > resultado.txt
+          # Muestra el resultado en el registro
+          cat resultado.txt
+          # Comprueba el texto esperado; si no aparece, falla
+          grep -q "Estado: Aprobado" resultado.txt
